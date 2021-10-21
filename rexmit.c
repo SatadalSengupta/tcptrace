@@ -134,25 +134,26 @@ rexmit (tcb * ptcb,
     *pout_order = FALSE;
 
     /* see which quadrant it starts in */
+	fprintf(stdout, "pquad lookup from rexmit(), ");
     pquad = whichquad (sspace, seq);
 
     /* add the new segment into the segment database */
     if (BOUNDARY (seq, seq_last)) {
-	/* lives in two different quadrants (can't be > 2) */
-	seqnum seq1, seq2;
-	u_long len1, len2;
+		/* lives in two different quadrants (can't be > 2) */
+		seqnum seq1, seq2;
+		u_long len1, len2;
 
-	/* in first quadrant */
-	seq1 = seq;
-	len1 = LAST_SEQ (QUADNUM (seq1)) - seq1 + 1;
-	rexlen = addseg (ptcb, pquad, seq1, len1, pout_order);
+		/* in first quadrant */
+		seq1 = seq;
+		len1 = LAST_SEQ (QUADNUM (seq1)) - seq1 + 1;
+		rexlen = addseg (ptcb, pquad, seq1, len1, pout_order);
 
-	/* in second quadrant */
-	seq2 = FIRST_SEQ (QUADNUM (seq_last));
-	len2 = len - len1;
-	rexlen += addseg (ptcb, pquad->next, seq2, len2, pout_order);
+		/* in second quadrant */
+		seq2 = FIRST_SEQ (QUADNUM (seq_last));
+		len2 = len - len1;
+		rexlen += addseg (ptcb, pquad->next, seq2, len2, pout_order);
     } else {
-	rexlen = addseg (ptcb, pquad, seq, len, pout_order);
+		rexlen = addseg (ptcb, pquad, seq, len, pout_order);
     }
 
     return (rexlen);
@@ -181,63 +182,63 @@ addseg (tcb * ptcb,
 	(thisseg_firstbyte > pquad->seglist_tail->seq_lastbyte))
 	pseg = NULL;
     for (; pseg != NULL; pseg = pseg->next) {
-	if (thisseg_firstbyte > pseg->seq_lastbyte) {
-	    /* goes beyond this one */
-	    continue;
-	}
+		if (thisseg_firstbyte > pseg->seq_lastbyte) {
+			/* goes beyond this one */
+			continue;
+		}
 
-	if (thisseg_firstbyte < pseg->seq_firstbyte) {
-	    /* starts BEFORE this recorded segment */
+		if (thisseg_firstbyte < pseg->seq_firstbyte) {
+			/* starts BEFORE this recorded segment */
 
-	    /* if it also FINISHES before this segment, then it's */
-	    /* out of order (otherwise it's a resend the collapsed */
-	    /* multiple segments into one */
-	    if (thisseg_lastbyte < pseg->seq_lastbyte)
-		*pout_order = TRUE;
+			/* if it also FINISHES before this segment, then it's */
+			/* out of order (otherwise it's a resend the collapsed */
+			/* multiple segments into one */
+			if (thisseg_lastbyte < pseg->seq_lastbyte)
+				*pout_order = TRUE;
 
-	    /* make a new segment record for it */
-	    pseg_new = create_seg (thisseg_firstbyte, len);
-	    insert_seg_between (pquad, pseg_new, pseg->prev, pseg);
+			/* make a new segment record for it */
+			pseg_new = create_seg (thisseg_firstbyte, len);
+			insert_seg_between (pquad, pseg_new, pseg->prev, pseg);
 
-	    /* see if we overlap the next segment in the list */
-	    if (thisseg_lastbyte < pseg->seq_firstbyte) {
-		/* we don't overlap, so we're done */
-		return (rexlen);
-	    } else {
-		/* overlap him, split myself in 2 */
+			/* see if we overlap the next segment in the list */
+			if (thisseg_lastbyte < pseg->seq_firstbyte) {
+				/* we don't overlap, so we're done */
+				return (rexlen);
+			} else {
+				/* overlap him, split myself in 2 */
 
-		/* adjust new piece to mate with old piece */
-		pseg_new->seq_lastbyte = pseg->seq_firstbyte - 1;
+				/* adjust new piece to mate with old piece */
+				pseg_new->seq_lastbyte = pseg->seq_firstbyte - 1;
 
-		/* pretend to be just the second half of this segment */
-		pseg_new->seq_lastbyte = pseg->seq_firstbyte - 1;
-		thisseg_firstbyte = pseg->seq_firstbyte;
-		len = thisseg_lastbyte - thisseg_firstbyte + 1;
+				/* pretend to be just the second half of this segment */
+				pseg_new->seq_lastbyte = pseg->seq_firstbyte - 1;
+				thisseg_firstbyte = pseg->seq_firstbyte;
+				len = thisseg_lastbyte - thisseg_firstbyte + 1;
 
-		/* fall through */
-	    }
-	}
+				/* fall through */
+			}
+		}
 
-	/* no ELSE, we might have fallen through */
-	if (thisseg_firstbyte >= pseg->seq_firstbyte) {
-	    /* starts within this recorded sequence */
-	    ++pseg->retrans;
-	    if (!split)
-		rtt_retrans (ptcb, pseg);	/* must be a retransmission */
+		/* no ELSE, we might have fallen through */
+		if (thisseg_firstbyte >= pseg->seq_firstbyte) {
+			/* starts within this recorded sequence */
+			++pseg->retrans;
+			if (!split)
+				rtt_retrans (ptcb, pseg);	/* must be a retransmission */
 
-	    if (thisseg_lastbyte <= pseg->seq_lastbyte) {
-		/* entirely contained within this sequence */
-		rexlen += len;
-		return (rexlen);
-	    }
-	    /* else */
-	    /* we extend beyond this sequence, split ourself in 2 */
-	    /* (pretend to be just the second half of this segment) */
-	    split = TRUE;
-	    rexlen += pseg->seq_lastbyte - thisseg_firstbyte + 1;
-	    thisseg_firstbyte = pseg->seq_lastbyte + 1;
-	    len = thisseg_lastbyte - thisseg_firstbyte + 1;
-	}
+			if (thisseg_lastbyte <= pseg->seq_lastbyte) {
+				/* entirely contained within this sequence */
+				rexlen += len;
+				return (rexlen);
+			}
+			/* else */
+			/* we extend beyond this sequence, split ourself in 2 */
+			/* (pretend to be just the second half of this segment) */
+			split = TRUE;
+			rexlen += pseg->seq_lastbyte - thisseg_firstbyte + 1;
+			thisseg_firstbyte = pseg->seq_lastbyte + 1;
+			len = thisseg_lastbyte - thisseg_firstbyte + 1;
+		}
     }
 
 
@@ -285,6 +286,7 @@ whichquad (seqspace * sspace,
 	   seqnum seq)
 {
     quadnum qid = QUADNUM (seq);
+	fprintf(stdout, "Quadrant no. is: %d\n", qid);
     quadrant *pquad;
     int qix;
     int qix_next;
@@ -434,91 +436,96 @@ rtt_ackin (tcb * ptcb,
     etime_rtt = elapsed (pseg->time, current_time);
 
     if (rexmit_prev) {
-	/* first, check for the situation in which the segment being ACKed */
-	/* was sent a while ago, and we've been piddling around */
-	/* retransmitting lost segments that came before it */
-	ptcb->rtt_last = 0.0;	/* don't use this sample, it's very long */
-	etime_rtt = 0.0;
+		/* first, check for the situation in which the segment being ACKed */
+		/* was sent a while ago, and we've been piddling around */
+		/* retransmitting lost segments that came before it */
+		ptcb->rtt_last = 0.0;	/* don't use this sample, it's very long */
+		etime_rtt = 0.0;
 
-	++ptcb->rtt_nosample;	/* no sample, even though not ambig */
-	ret = NOSAMP;
+		++ptcb->rtt_nosample;	/* no sample, even though not ambig */
+		ret = NOSAMP;
+
     } else if (pseg->retrans == 0) {
-	ptcb->rtt_last = etime_rtt;
+		ptcb->rtt_last = etime_rtt;
 
-	if ((ptcb->rtt_min == 0) || (ptcb->rtt_min > etime_rtt))
-	    ptcb->rtt_min = etime_rtt;
+		if ((ptcb->rtt_min == 0) || (ptcb->rtt_min > etime_rtt))
+			ptcb->rtt_min = etime_rtt;
 
-	if (ptcb->rtt_max < etime_rtt)
-	    ptcb->rtt_max = etime_rtt;
+		if (ptcb->rtt_max < etime_rtt)
+			ptcb->rtt_max = etime_rtt;
 
-	ptcb->rtt_sum += etime_rtt;
-	ptcb->rtt_sum2 += etime_rtt * etime_rtt;
-	++ptcb->rtt_count;
+		ptcb->rtt_sum += etime_rtt;
+		ptcb->rtt_sum2 += etime_rtt * etime_rtt;
+		++ptcb->rtt_count;
 
-	/* Collecting stats for full size segments */
-	/* Calculate the current_size of the segment,
-	   taking care of possible sequence space wrap around */
+		/* Collecting stats for full size segments */
+		/* Calculate the current_size of the segment,
+		taking care of possible sequence space wrap around */
 
-	if (pseg->seq_lastbyte > pseg->seq_firstbyte)
-	    current_size = pseg->seq_lastbyte - pseg->seq_firstbyte + 1;
-	else
-	    /* MAX_32 is 0x1,0000,0000
-	       So we don't need the "+ 1" while calculating the size here */
-	    current_size =
-		(MAX_32 - pseg->seq_firstbyte) + pseg->seq_lastbyte;
+		if (pseg->seq_lastbyte > pseg->seq_firstbyte)
+			current_size = pseg->seq_lastbyte - pseg->seq_firstbyte + 1;
+		else
+			/* MAX_32 is 0x1,0000,0000
+			So we don't need the "+ 1" while calculating the size here */
+			current_size =
+			(MAX_32 - pseg->seq_firstbyte) + pseg->seq_lastbyte;
 
-	if (!ptcb->rtt_full_size || (ptcb->rtt_full_size < current_size)) {
-	    /* Found a bigger segment.. Reset all stats. */
-	    ptcb->rtt_full_size = current_size;
+		if (!ptcb->rtt_full_size || (ptcb->rtt_full_size < current_size)) {
+			/* Found a bigger segment.. Reset all stats. */
+			ptcb->rtt_full_size = current_size;
 
-	    ptcb->rtt_full_min = etime_rtt;
-	    ptcb->rtt_full_max = etime_rtt;
-	    ptcb->rtt_full_sum = etime_rtt;
-	    ptcb->rtt_full_sum2 = (etime_rtt * etime_rtt);
-	    ptcb->rtt_full_count = 1;
-	} else if (ptcb->rtt_full_size == current_size) {
-	    ++ptcb->rtt_full_count;
+			ptcb->rtt_full_min = etime_rtt;
+			ptcb->rtt_full_max = etime_rtt;
+			ptcb->rtt_full_sum = etime_rtt;
+			ptcb->rtt_full_sum2 = (etime_rtt * etime_rtt);
+			ptcb->rtt_full_count = 1;
+		} else if (ptcb->rtt_full_size == current_size) {
+			++ptcb->rtt_full_count;
 
-	    if ((ptcb->rtt_full_min == 0)
-		|| (ptcb->rtt_full_min > etime_rtt))
-		ptcb->rtt_full_min = etime_rtt;
+			if ((ptcb->rtt_full_min == 0)
+			|| (ptcb->rtt_full_min > etime_rtt))
+			ptcb->rtt_full_min = etime_rtt;
 
-	    if (ptcb->rtt_full_max < etime_rtt)
-		ptcb->rtt_full_max = etime_rtt;
+			if (ptcb->rtt_full_max < etime_rtt)
+			ptcb->rtt_full_max = etime_rtt;
 
-	    ptcb->rtt_full_sum += etime_rtt;
-	    ptcb->rtt_full_sum2 += (etime_rtt * etime_rtt);
-	}
-	ret = NORMAL;
+			ptcb->rtt_full_sum += etime_rtt;
+			ptcb->rtt_full_sum2 += (etime_rtt * etime_rtt);
+		}
+		ret = NORMAL;
+
     } else {
-	/* retrans, can't use it */
-	if ((ptcb->rtt_min_last == 0) || (ptcb->rtt_min_last > etime_rtt))
-	    ptcb->rtt_min_last = etime_rtt;
+		/* retrans, can't use it */
+		if ((ptcb->rtt_min_last == 0) || (ptcb->rtt_min_last > etime_rtt))
+			ptcb->rtt_min_last = etime_rtt;
 
-	if (ptcb->rtt_max_last < etime_rtt)
-	    ptcb->rtt_max_last = etime_rtt;
+		if (ptcb->rtt_max_last < etime_rtt)
+			ptcb->rtt_max_last = etime_rtt;
 
-	ptcb->rtt_sum_last += etime_rtt;
-	ptcb->rtt_sum2_last += etime_rtt * etime_rtt;
-	++ptcb->rtt_count_last;
+		ptcb->rtt_sum_last += etime_rtt;
+		ptcb->rtt_sum2_last += etime_rtt * etime_rtt;
+		++ptcb->rtt_count_last;
 
-	++ptcb->rtt_amback;	/* ambiguous ACK */
+		++ptcb->rtt_amback;	/* ambiguous ACK */
 
-	/* numbers not useful for plotting/dumping */
-	ptcb->rtt_last = 0.0;
-	etime_rtt = 0.0;
+		/* numbers not useful for plotting/dumping */
+		ptcb->rtt_last = 0.0;
+		etime_rtt = 0.0;
 
-	ret = AMBIG;
+		ret = AMBIG;
     }
+
+	// Debug
+	fprintf (stdout, "==== ACK type: %d, Retransmissions before: %d\n", ret, rexmit_prev);
 
     /* dump RTT samples, if asked */
     if (dump_rtt && (etime_rtt != 0.0)) {
-	dump_rtt_sample (ptcb, pseg, etime_rtt);
+		dump_rtt_sample (ptcb, pseg, etime_rtt);
     }
 
     /* plot RTT samples, if asked */
     if (graph_rtt && (pseg->retrans == 0)) {
-	graph_rtt_sample (ptcb, pseg, etime_rtt);
+		graph_rtt_sample (ptcb, pseg, etime_rtt);
     }
 
     return (ret);
@@ -533,20 +540,20 @@ rtt_retrans (tcb * ptcb,
     double etime;
 
     if (!pseg->acked) {
-	/* if it was acked, then it's been collapsed and these */
-	/* are no longer meaningful */
-	etime = elapsed (pseg->time, current_time);
-	if (pseg->retrans > ptcb->retr_max)
-	    ptcb->retr_max = pseg->retrans;
+		/* if it was acked, then it's been collapsed and these */
+		/* are no longer meaningful */
+		etime = elapsed (pseg->time, current_time);
+		if (pseg->retrans > ptcb->retr_max)
+			ptcb->retr_max = pseg->retrans;
 
-	if (etime > ptcb->retr_max_tm)
-	    ptcb->retr_max_tm = etime;
-	if ((ptcb->retr_min_tm == 0) || (etime < ptcb->retr_min_tm))
-	    ptcb->retr_min_tm = etime;
+		if (etime > ptcb->retr_max_tm)
+			ptcb->retr_max_tm = etime;
+		if ((ptcb->retr_min_tm == 0) || (etime < ptcb->retr_min_tm))
+			ptcb->retr_min_tm = etime;
 
-	ptcb->retr_tm_sum += etime;
-	ptcb->retr_tm_sum2 += etime * etime;
-	++ptcb->retr_tm_count;
+		ptcb->retr_tm_sum += etime;
+		ptcb->retr_tm_sum2 += etime * etime;
+		++ptcb->retr_tm_count;
     }
 
     pseg->time = current_time;
@@ -562,6 +569,7 @@ ack_in (tcb * ptcb,
     quadrant *pquad;
     quadrant *pquad_prev;
     segment *pseg;
+	segment *dbugseg;
     Bool changed_one = FALSE;
     Bool intervening_xmits = FALSE;
     timeval last_xmit = { 0, 0 };
@@ -578,8 +586,23 @@ ack_in (tcb * ptcb,
 
 
     /* check each segment in the segment list for the PREVIOUS quadrant */
+	fprintf(stdout, "pquad lookup from ack_in(), ");
     pquad = whichquad (ptcb->ss, ack);
+
     pquad_prev = pquad->prev;
+
+	// Debug
+	fprintf (stdout, "ACK number is %u\n", ack);
+	fprintf (stdout, "  Before collapse:\n");
+	fprintf (stdout, "    Current PQUAD SEGLIST: ");
+	for (dbugseg = pquad->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
+		fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
+	fprintf (stdout, "\n");
+	fprintf (stdout, "    Previous PQUAD SEGLIST: ");
+	for (dbugseg = pquad_prev->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
+		fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
+	fprintf (stdout, "\n");
+
     for (pseg = pquad_prev->seglist_head; pseg != NULL; pseg = pseg->next) {
 	if (!pseg->acked) {
 	    ++pseg->acked;
@@ -592,7 +615,10 @@ ack_in (tcb * ptcb,
 	}
     }
     if (changed_one)
-	collapse_quad (pquad_prev);
+		collapse_quad (pquad_prev);
+
+	// Debug
+	fprintf(stdout, "=== Last transmit time after prev quad: %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec);
 
     /* check each segment in the segment list for the CURRENT quadrant */
     changed_one = FALSE;
@@ -605,6 +631,9 @@ ack_in (tcb * ptcb,
 	/* keep track of the newest transmission */
 	if (tv_gt (pseg->time, last_xmit))
 	    last_xmit = pseg->time;
+	
+	// Debug
+	fprintf(stdout, "=== Last transmit time after lines 626-627: %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec);
 
 	/* (ELSE) ACK covers this sequence */
 	if (pseg->acked) {
@@ -621,11 +650,11 @@ ack_in (tcb * ptcb,
 		    ret = CUMUL;
 		    if (pseg->acked == 4) {
 			/* some people say these CAN'T have data */
-			if ((tcp_data_length == 0)
-			    || triple_dupack_allows_data) {
-			    ++ptcb->rtt_triple_dupack;
-			    ret = TRIPLE;
-			}
+				if ((tcp_data_length == 0)
+					|| triple_dupack_allows_data) {
+					++ptcb->rtt_triple_dupack;
+					ret = TRIPLE;
+				}
 		    }
 		}
 		break;
@@ -667,6 +696,10 @@ ack_in (tcb * ptcb,
 	    /* if ANY preceding segment was xmitted after this one,
 	       the the RTT sample is invalid */
 	    intervening_xmits = (tv_gt (last_xmit, pseg->time));
+		
+		// Debug
+		fprintf(stdout, "=== Last transmit time inside 'ELSE !acked': %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec);
+		fprintf (stdout, "=== Intervening transmit info.:: Last transmit time: %ld:%ld, Seg. time: %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec, pseg->time.tv_sec, pseg->time.tv_usec);
 
 	    ret = rtt_ackin (ptcb, pseg, intervening_xmits);
 	} else {
@@ -675,8 +708,21 @@ ack_in (tcb * ptcb,
 	    ret = CUMUL;
 	}
     }
+
     if (changed_one)
-	collapse_quad (pquad);
+		collapse_quad (pquad);
+
+	// Debug
+	fprintf (stdout, "  After collapse:\n");
+	fprintf (stdout, "    Current PQUAD SEGLIST: ");
+	for (dbugseg = pquad->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
+		fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
+	fprintf (stdout, "\n");
+	fprintf (stdout, "    Previous PQUAD SEGLIST: ");
+	for (dbugseg = pquad_prev->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
+		fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
+	fprintf (stdout, "\n\n");
+
     return (ret);
 }
 
@@ -731,9 +777,15 @@ dump_rtt_sample (tcb * ptcb,
 	ptcb->rtt_dump_file = f;
     }
 
-    Mfprintf (ptcb->rtt_dump_file, "%lu %lu\n",
+    // Mfprintf (ptcb->rtt_dump_file, "%lu %lu\n",
+	//       pseg->seq_firstbyte,
+	//       (int) (etime_rtt / 1000) /* convert from us to ms */ );
+	
+	Mfprintf (ptcb->rtt_dump_file, "%lu %lu\n",
 	      pseg->seq_firstbyte,
-	      (int) (etime_rtt / 1000) /* convert from us to ms */ );
+	      (int) (etime_rtt) /* DON'T convert from us to ms */ );
+	
+	fprintf (stdout, "=== RTT SAMPLE: Seq. No.: %u, RTT: %d us\n", pseg->seq_firstbyte, (int) etime_rtt);
 }
 
 
@@ -777,6 +829,7 @@ graph_rtt_sample (tcb * ptcb,
 }
 
 Bool IsRTO(tcb *ptcb, seqnum s) {
+  fprintf(stdout, "pquad lookup from IsRTO(), ");
   quadrant *pquad = whichquad(ptcb->ss,s);
   segment *pseg;
 

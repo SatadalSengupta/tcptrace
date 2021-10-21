@@ -1388,12 +1388,12 @@ dotrace(
 
     /* make sure we have enough of the packet */
     if ((char *)ptcp + sizeof(struct tcphdr)-1 > (char *)plast) {
-	if (warn_printtrunc)
-	    fprintf(stderr,
-		    "TCP packet %lu truncated too short to trace, ignored\n",
-		    pnum);
-	++ctrunc;
-	return(NULL);
+		if (warn_printtrunc)
+			fprintf(stderr,
+				"TCP packet %lu truncated too short to trace, ignored\n",
+				pnum);
+		++ctrunc;
+		return(NULL);
     }
 
 
@@ -1412,7 +1412,7 @@ dotrace(
     ++tcp_packet_count;
 
     if (ptp_save == NULL) {
-	return(NULL);
+		return(NULL);
     }
 
     ++tcp_trace_count;
@@ -1424,7 +1424,7 @@ dotrace(
 
     /* do time stats */
     if (ZERO_TIME(&ptp_save->first_time)) {
-	ptp_save->first_time = current_time;
+		ptp_save->first_time = current_time;
     }
     ptp_save->last_time = current_time;
 
@@ -1437,20 +1437,20 @@ dotrace(
 
     /* figure out which direction this packet is going */
     if (dir == A2B) {
-	thisdir  = &ptp_save->a2b;
-	otherdir = &ptp_save->b2a;
+		thisdir  = &ptp_save->a2b;
+		otherdir = &ptp_save->b2a;
     } else {
-	thisdir  = &ptp_save->b2a;
-	otherdir = &ptp_save->a2b;
+		thisdir  = &ptp_save->b2a;
+		otherdir = &ptp_save->a2b;
     }
 
     /* meta connection stats */
     if (SYN_SET(ptcp))
-	++thisdir->syn_count;
+		++thisdir->syn_count;
     if (RESET_SET(ptcp))
-	++thisdir->reset_count;
+		++thisdir->reset_count;
     if (FIN_SET(ptcp))
-	++thisdir->fin_count;
+		++thisdir->fin_count;
 
     /* end bug fix */
 
@@ -1458,19 +1458,19 @@ dotrace(
     /* compute the "effective window", which is the advertised window */
     /* with scaling */
     if (ACK_SET(ptcp) || SYN_SET(ptcp)) {
-	eff_win = (u_long) th_win;
+		eff_win = (u_long) th_win;
 
-	/* N.B., the window_scale stored for the connection DURING 3way */
-	/* handshaking is the REQUESTED scale.  It's only valid if both */
-	/* sides request scaling.  AFTER we've seen both SYNs, that field */
-	/* is reset (above) to contain zero.  Note that if we */
-	/* DIDN'T see the SYNs, the windows will be off. */
- 	/* Jamshid: Remember that the window is never scaled in SYN */
- 	/* packets, as per RFC 1323. */
- 	if (thisdir->f1323_ws && otherdir->f1323_ws && !SYN_SET(ptcp))
-	    eff_win <<= thisdir->window_scale;
+		/* N.B., the window_scale stored for the connection DURING 3way */
+		/* handshaking is the REQUESTED scale.  It's only valid if both */
+		/* sides request scaling.  AFTER we've seen both SYNs, that field */
+		/* is reset (above) to contain zero.  Note that if we */
+		/* DIDN'T see the SYNs, the windows will be off. */
+		/* Jamshid: Remember that the window is never scaled in SYN */
+		/* packets, as per RFC 1323. */
+		if (thisdir->f1323_ws && otherdir->f1323_ws && !SYN_SET(ptcp))
+			eff_win <<= thisdir->window_scale;
     } else {
-	eff_win = 0;
+		eff_win = 0;
     }
 
     
@@ -1573,7 +1573,7 @@ dotrace(
     old_this_windowend = thisdir->windowend;
 
     if (ACK_SET(ptcp)) {
-	thisdir->windowend = th_ack + eff_win;
+		thisdir->windowend = th_ack + eff_win;
     }
     /* end bugfix */
 
@@ -2135,34 +2135,34 @@ dotrace(
 
     /* check for RESET */
     if (RESET_SET(ptcp)) {
-	u_long plot_at;
+		u_long plot_at;
 
-	/* if there's an ACK in this packet, plot it there */
-	/* otherwise, plot it at the last valid ACK we have */
-	if (ACK_SET(ptcp))
-	    plot_at = th_ack;
-	else
-	    plot_at = thisdir->ack;
+		/* if there's an ACK in this packet, plot it there */
+		/* otherwise, plot it at the last valid ACK we have */
+		if (ACK_SET(ptcp))
+			plot_at = th_ack;
+		else
+			plot_at = thisdir->ack;
 
-	if (to_tsgpl != NO_PLOTTER) {
-	    plotter_temp_color(to_tsgpl, text_color);
-	    plotter_text(to_tsgpl,
-			 current_time, SeqRep(otherdir,plot_at),
-			 "a", "RST_IN");
-	}
-	if (from_tsgpl != NO_PLOTTER) {
-	    plotter_temp_color(from_tsgpl, text_color);
-	    plotter_text(from_tsgpl,
-			 current_time, SeqRep(thisdir,start),
-			 "a", "RST_OUT");
-	}
-	if (ACK_SET(ptcp))
-	    ++thisdir->ack_pkts;
+		if (to_tsgpl != NO_PLOTTER) {
+			plotter_temp_color(to_tsgpl, text_color);
+			plotter_text(to_tsgpl,
+				current_time, SeqRep(otherdir,plot_at),
+				"a", "RST_IN");
+		}
+		if (from_tsgpl != NO_PLOTTER) {
+			plotter_temp_color(from_tsgpl, text_color);
+			plotter_text(from_tsgpl,
+				current_time, SeqRep(thisdir,start),
+				"a", "RST_OUT");
+		}
+		if (ACK_SET(ptcp))
+			++thisdir->ack_pkts;
 
-        if (run_continuously) {
-            UpdateConnLists(tcp_ptr, ptcp); 
-        }
-	return(ptp_save);
+			if (run_continuously) {
+				UpdateConnLists(tcp_ptr, ptcp); 
+			}
+		return(ptp_save);
     }
    
     /* do window stats (include first SYN too!) */
@@ -2411,59 +2411,59 @@ dotrace(
     /* estimate the congestion window as the number of outstanding */
     /* un-acked bytes */
     if (!SYN_SET(ptcp) && !out_order && !retrans) {
-	u_long owin;
-	/* If there has been no ack from the other direction, owin is just 
-	 * bytes in this pkt.
-	 */
-	if (otherdir->ack == 0){
-		owin = end - start ;
-	}
-	else {
-		/* ack  always acks 'received + 1' bytes, so subtract 1 
-		 * for owin */
-		owin = end - (otherdir->ack - 1);
-	}
-	
-	if (owin > thisdir->owin_max)
-	    thisdir->owin_max = owin;
-	if ((owin > 0) &&
-	    ((thisdir->owin_min == 0) ||
-	     (owin < thisdir->owin_min)))
-	    thisdir->owin_min = owin;
-	
-	thisdir->owin_tot += owin;	
-       	thisdir->owin_count++;
+		u_long owin;
+		/* If there has been no ack from the other direction, owin is just 
+		* bytes in this pkt.
+		*/
+		if (otherdir->ack == 0){
+			owin = end - start ;
+		}
+		else {
+			/* ack  always acks 'received + 1' bytes, so subtract 1 
+			* for owin */
+			owin = end - (otherdir->ack - 1);
+		}
+		
+		if (owin > thisdir->owin_max)
+			thisdir->owin_max = owin;
+		if ((owin > 0) &&
+			((thisdir->owin_min == 0) ||
+			(owin < thisdir->owin_min)))
+			thisdir->owin_min = owin;
+		
+		thisdir->owin_tot += owin;	
+			thisdir->owin_count++;
 
-	/* adding mark's suggestion of weighted owin */
-	if (thisdir->previous_owin_sample_time.tv_sec == 0) {
-	  /* if this is first ever sample for thisdir */
-		thisdir->previous_owin_sample_time = thisdir->last_time;
-		thisdir->previous_owin_sample = owin;
-	}
-	else { 
-		/* weight each owin sample with the duration that it exists for */
-        	sample_elapsed_time = (elapsed(thisdir->previous_owin_sample_time, ptp_save->last_time))/1000000;
-        	total_elapsed_time = (elapsed(ptp_save->first_time, ptp_save->last_time))/1000000;
-		thisdir->owin_wavg += (u_llong)((thisdir->previous_owin_sample) * sample_elapsed_time);
-		/* graph owin_wavg */
+		/* adding mark's suggestion of weighted owin */
+		if (thisdir->previous_owin_sample_time.tv_sec == 0) {
+		/* if this is first ever sample for thisdir */
+			thisdir->previous_owin_sample_time = thisdir->last_time;
+			thisdir->previous_owin_sample = owin;
+		}
+		else { 
+			/* weight each owin sample with the duration that it exists for */
+				sample_elapsed_time = (elapsed(thisdir->previous_owin_sample_time, ptp_save->last_time))/1000000;
+				total_elapsed_time = (elapsed(ptp_save->first_time, ptp_save->last_time))/1000000;
+			thisdir->owin_wavg += (u_llong)((thisdir->previous_owin_sample) * sample_elapsed_time);
+			/* graph owin_wavg */
+			if (thisdir->owin_plotter != NO_PLOTTER) {
+				extend_line(thisdir->owin_wavg_line, thisdir->previous_owin_sample_time,
+						(total_elapsed_time)?((u_llong)((thisdir->owin_wavg)/total_elapsed_time)):0);
+			} 
+				thisdir->previous_owin_sample_time = thisdir->last_time;
+			thisdir->previous_owin_sample = owin;
+		}
+
+		/* graph owin */
 		if (thisdir->owin_plotter != NO_PLOTTER) {
-			extend_line(thisdir->owin_wavg_line, thisdir->previous_owin_sample_time,
-		        	(total_elapsed_time)?((u_llong)((thisdir->owin_wavg)/total_elapsed_time)):0);
-		} 
-	    	thisdir->previous_owin_sample_time = thisdir->last_time;
-		thisdir->previous_owin_sample = owin;
-	}
-
-	/* graph owin */
-	if (thisdir->owin_plotter != NO_PLOTTER) {
-	    extend_line(thisdir->owin_line, current_time, owin);
-	    if (show_rwinline) {
-	      extend_line(thisdir->rwin_line, current_time, 
-			  otherdir->win_last);
-	    }
-	    extend_line(thisdir->owin_avg_line, current_time,
-			(thisdir->owin_count?(thisdir->owin_tot/thisdir->owin_count):0)); 
-	}
+			extend_line(thisdir->owin_line, current_time, owin);
+			if (show_rwinline) {
+			extend_line(thisdir->rwin_line, current_time, 
+				otherdir->win_last);
+			}
+			extend_line(thisdir->owin_avg_line, current_time,
+				(thisdir->owin_count?(thisdir->owin_tot/thisdir->owin_count):0)); 
+		}
     }
     if (run_continuously) {
       UpdateConnLists(tcp_ptr, ptcp);
