@@ -48,7 +48,6 @@ versnum
 input/
 cygwin-includes/
 cygwin-libs/
-flex-bison/
 README.*
 ARGS
 CHANGES
@@ -59,18 +58,10 @@ INSTALL
 THANKS
 WWW
 Makefile.empty
-Makefile.in
 aclocal.m4
-config.guess
-config.sub
-configure
 configure.in
 dot_tcptracerc
-filt_parser.y
-filt_scanner.l
-flex_bison/
 includes_vms.tlb
-install-sh
 make_vms.com
 tcptrace.man
 tcptrace.opt
