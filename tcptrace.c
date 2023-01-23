@@ -170,6 +170,8 @@ int num_modules = 0;
 char *ColorNames[NCOLORS] =
 {"green", "red", "blue", "yellow", "purple", "orange", "magenta", "pink"};
 char *comment;
+// Add RTT file as a global
+MFILE *rtt_fileptr;
 
 /* locally global variables */
 static u_long filesize = 0;

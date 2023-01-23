@@ -134,7 +134,9 @@ rexmit (tcb * ptcb,
     *pout_order = FALSE;
 
     /* see which quadrant it starts in */
-	fprintf(stdout, "pquad lookup from rexmit(), ");
+	//Debug
+    if (debug)
+        fprintf (stdout, "pquad lookup from rexmit(), ");
     pquad = whichquad (sspace, seq);
 
     /* add the new segment into the segment database */
@@ -286,7 +288,8 @@ whichquad (seqspace * sspace,
 	   seqnum seq)
 {
     quadnum qid = QUADNUM (seq);
-	fprintf(stdout, "Quadrant no. is: %d\n", qid);
+    if (debug)
+	    fprintf (stdout, "Quadrant no. is: %d\n", qid);
     quadrant *pquad;
     int qix;
     int qix_next;
@@ -516,7 +519,8 @@ rtt_ackin (tcb * ptcb,
     }
 
 	// Debug
-	fprintf (stdout, "==== ACK type: %d, Retransmissions before: %d\n", ret, rexmit_prev);
+	if (debug)
+        fprintf (stdout, "==== ACK type: %d, Retransmissions before: %d\n", ret, rexmit_prev);
 
     /* dump RTT samples, if asked */
     if (dump_rtt && (etime_rtt != 0.0)) {
@@ -586,22 +590,25 @@ ack_in (tcb * ptcb,
 
 
     /* check each segment in the segment list for the PREVIOUS quadrant */
-	fprintf(stdout, "pquad lookup from ack_in(), ");
+    if (debug)
+	    fprintf (stdout, "pquad lookup from ack_in(), ");
     pquad = whichquad (ptcb->ss, ack);
 
     pquad_prev = pquad->prev;
 
 	// Debug
-	fprintf (stdout, "ACK number is %u\n", ack);
-	fprintf (stdout, "  Before collapse:\n");
-	fprintf (stdout, "    Current PQUAD SEGLIST: ");
-	for (dbugseg = pquad->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
-		fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
-	fprintf (stdout, "\n");
-	fprintf (stdout, "    Previous PQUAD SEGLIST: ");
-	for (dbugseg = pquad_prev->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
-		fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
-	fprintf (stdout, "\n");
+	if (debug) {
+        fprintf (stdout, "ACK number is %u\n", ack);
+        fprintf (stdout, "  Before collapse:\n");
+        fprintf (stdout, "    Current PQUAD SEGLIST: ");
+        for (dbugseg = pquad->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
+            fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
+        fprintf (stdout, "\n");
+        fprintf (stdout, "    Previous PQUAD SEGLIST: ");
+        for (dbugseg = pquad_prev->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
+            fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
+        fprintf (stdout, "\n");
+    }
 
     for (pseg = pquad_prev->seglist_head; pseg != NULL; pseg = pseg->next) {
 	if (!pseg->acked) {
@@ -618,7 +625,8 @@ ack_in (tcb * ptcb,
 		collapse_quad (pquad_prev);
 
 	// Debug
-	fprintf(stdout, "=== Last transmit time after prev quad: %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec);
+    if (debug)
+	    fprintf (stdout, "=== Last transmit time after prev quad: %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec);
 
     /* check each segment in the segment list for the CURRENT quadrant */
     changed_one = FALSE;
@@ -633,7 +641,8 @@ ack_in (tcb * ptcb,
 	    last_xmit = pseg->time;
 	
 	// Debug
-	fprintf(stdout, "=== Last transmit time after lines 626-627: %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec);
+	if (debug)
+	    fprintf (stdout, "=== Last transmit time after lines 626-627: %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec);
 
 	/* (ELSE) ACK covers this sequence */
 	if (pseg->acked) {
@@ -698,9 +707,11 @@ ack_in (tcb * ptcb,
 	    intervening_xmits = (tv_gt (last_xmit, pseg->time));
 		
 		// Debug
-		fprintf(stdout, "=== Last transmit time inside 'ELSE !acked': %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec);
-		fprintf (stdout, "=== Intervening transmit info.:: Last transmit time: %ld:%ld, Seg. time: %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec, pseg->time.tv_sec, pseg->time.tv_usec);
-
+		if (debug) {
+            fprintf (stdout, "=== Last transmit time inside 'ELSE !acked': %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec);
+		    fprintf (stdout, "=== Intervening transmit info.:: Last transmit time: %ld:%ld, Seg. time: %ld:%ld\n", last_xmit.tv_sec, last_xmit.tv_usec, pseg->time.tv_sec, pseg->time.tv_usec);
+        }
+	    
 	    ret = rtt_ackin (ptcb, pseg, intervening_xmits);
 	} else {
 	    /* cumulatively ACKed */
@@ -713,15 +724,17 @@ ack_in (tcb * ptcb,
 		collapse_quad (pquad);
 
 	// Debug
-	fprintf (stdout, "  After collapse:\n");
-	fprintf (stdout, "    Current PQUAD SEGLIST: ");
-	for (dbugseg = pquad->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
-		fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
-	fprintf (stdout, "\n");
-	fprintf (stdout, "    Previous PQUAD SEGLIST: ");
-	for (dbugseg = pquad_prev->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
-		fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
-	fprintf (stdout, "\n\n");
+    if (debug) {
+        fprintf (stdout, "  After collapse:\n");
+        fprintf (stdout, "    Current PQUAD SEGLIST: ");
+        for (dbugseg = pquad->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
+            fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
+        fprintf (stdout, "\n");
+        fprintf (stdout, "    Previous PQUAD SEGLIST: ");
+        for (dbugseg = pquad_prev->seglist_head; dbugseg != NULL; dbugseg = dbugseg->next)
+            fprintf (stdout, "(%u - %u), ", dbugseg->seq_firstbyte, dbugseg->seq_lastbyte);
+        fprintf (stdout, "\n\n");
+    }
 
     return (ret);
 }
@@ -753,39 +766,63 @@ dump_rtt_sample (tcb * ptcb,
 		 double etime_rtt)
 {
     /* if the FILE is "-1", couldn't open file */
-    if (ptcb->rtt_dump_file == (MFILE *) - 1) {
-	return;
+    // if (ptcb->rtt_dump_file == (MFILE *) - 1) {
+	//     return;
+    // }
+    if (rtt_fileptr == (MFILE *) - 1) {
+        return;
     }
 
+    // /* if the FILE is NULL, open file */
+    // if (ptcb->rtt_dump_file == (MFILE *) NULL) {
+    //     MFILE *f;
+    //     static char filename[15];
+
+    //     snprintf (filename, sizeof (filename), "%s2%s%s",
+    //     	  ptcb->host_letter, ptcb->ptwin->host_letter,
+    //     	  RTT_DUMP_FILE_EXTENSION);
+
+    //     if ((f = Mfopen (filename, "w")) == NULL) {
+    //         perror (filename);
+    //         ptcb->rtt_dump_file = (MFILE *) - 1;
+    //     }
+
+    //     if (debug)
+    //         fprintf (stderr, "RTT Sample file is '%s'\n", filename);
+
+    //     ptcb->rtt_dump_file = f;
+    // }
+
     /* if the FILE is NULL, open file */
-    if (ptcb->rtt_dump_file == (MFILE *) NULL) {
-	MFILE *f;
-	static char filename[15];
+    if (rtt_fileptr == (MFILE *) NULL) {
+        static char filename[16];
+        snprintf (filename, sizeof (filename), "rtt_samples.csv");
 
-	snprintf (filename, sizeof (filename), "%s2%s%s",
-		  ptcb->host_letter, ptcb->ptwin->host_letter,
-		  RTT_DUMP_FILE_EXTENSION);
+        if ((rtt_fileptr = Mfopen (filename, "w")) == NULL) {
+            perror (filename);
+            ptcb->rtt_dump_file = (MFILE *) - 1;
+        }
 
-	if ((f = Mfopen (filename, "w")) == NULL) {
-	    perror (filename);
-	    ptcb->rtt_dump_file = (MFILE *) - 1;
-	}
-
-	if (debug)
-	    fprintf (stderr, "RTT Sample file is '%s'\n", filename);
-
-	ptcb->rtt_dump_file = f;
+        if (debug)
+            fprintf (stderr, "RTT Sample file is '%s'\n", filename);
     }
 
     // Mfprintf (ptcb->rtt_dump_file, "%lu %lu\n",
 	//       pseg->seq_firstbyte,
 	//       (int) (etime_rtt / 1000) /* convert from us to ms */ );
+
+    Mfprintf (rtt_fileptr, "%s,%s,%s,%s,%ld.%d,%u,%u\n",
+        ptcb->ptp->a_hostname, ptcb->ptp->b_hostname,
+	    ptcb->ptp->a_portname, ptcb->ptp->b_portname,
+        current_time.tv_sec, current_time.tv_usec,
+	    pseg->seq_firstbyte, (unsigned int) etime_rtt); /* DON'T convert from us to ms */
 	
-	Mfprintf (ptcb->rtt_dump_file, "%lu %lu\n",
-	      pseg->seq_firstbyte,
-	      (int) (etime_rtt) /* DON'T convert from us to ms */ );
-	
-	fprintf (stdout, "=== RTT SAMPLE: Seq. No.: %u, RTT: %d us\n", pseg->seq_firstbyte, (int) etime_rtt);
+    if (debug) {
+        fprintf (stdout, "=== Connection info.:: %s : %s : %s : %s\n",
+                ptcb->ptp->a_hostname, ptcb->ptp->b_hostname,
+	            ptcb->ptp->a_portname, ptcb->ptp->b_portname);
+	    fprintf (stdout, "=== RTT SAMPLE: Seq. No.: %u, RTT: %f us\n", pseg->seq_firstbyte, etime_rtt);
+    }
 }
 
 
@@ -829,16 +866,17 @@ graph_rtt_sample (tcb * ptcb,
 }
 
 Bool IsRTO(tcb *ptcb, seqnum s) {
-  fprintf(stdout, "pquad lookup from IsRTO(), ");
-  quadrant *pquad = whichquad(ptcb->ss,s);
-  segment *pseg;
+    if (debug)
+        fprintf (stdout, "pquad lookup from IsRTO(), ");
+    quadrant *pquad = whichquad(ptcb->ss,s);
+    segment *pseg;
 
-  for (pseg = pquad->seglist_head; pseg != NULL; pseg = pseg->next) {
-    if (s == (pseg->seq_lastbyte+1)) {
-      if (pseg->acked < 4) return TRUE;
-      else return FALSE;
+    for (pseg = pquad->seglist_head; pseg != NULL; pseg = pseg->next) {
+        if (s == (pseg->seq_lastbyte+1)) {
+            if (pseg->acked < 4) return TRUE;
+            else return FALSE;
+        }
     }
-  }
 
   return TRUE;
 }

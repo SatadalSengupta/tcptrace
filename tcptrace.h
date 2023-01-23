@@ -751,6 +751,8 @@ extern char *sp;       /* Separator used for long output with <SP>-separated-val
  * when <SP>-separated-values is requested
  */
 extern char *comment;
+// Add RTT file as a global
+extern MFILE *rtt_fileptr;
 
 extern u_long ctrunc;
 extern timeval current_time;
