@@ -801,6 +801,9 @@ dump_rtt_sample (tcb * ptcb,
         if ((rtt_fileptr = Mfopen (filename, "w")) == NULL) {
             perror (filename);
             ptcb->rtt_dump_file = (MFILE *) - 1;
+        } else {
+            Mfprintf (rtt_fileptr, "%s\n",
+                "Source_IP,Destination_IP,Source_Port,Destination_Port,RTT_Sample_Time,TCP_SEQ_Number,TCP_ACK_Number,RTT_microseconds"); /* Add CSV header */
         }
 
         if (debug)
@@ -810,12 +813,20 @@ dump_rtt_sample (tcb * ptcb,
     // Mfprintf (ptcb->rtt_dump_file, "%lu %lu\n",
 	//       pseg->seq_firstbyte,
 	//       (int) (etime_rtt / 1000) /* convert from us to ms */ );
-
-    Mfprintf (rtt_fileptr, "%s,%s,%s,%s,%ld.%d,%u,%u\n",
-        ptcb->ptp->a_hostname, ptcb->ptp->b_hostname,
-	    ptcb->ptp->a_portname, ptcb->ptp->b_portname,
-        current_time.tv_sec, current_time.tv_usec,
-	    pseg->seq_firstbyte, (unsigned int) etime_rtt); /* DON'T convert from us to ms */
+    
+    if (strcmp(ptcb->host_letter, ptcb->ptwin->host_letter) < 0) {
+        Mfprintf (rtt_fileptr, "%s,%s,%s,%s,%ld.%d,%u,%u,%u\n",
+            ptcb->ptp->a_hostname, ptcb->ptp->b_hostname,
+            ptcb->ptp->a_portname, ptcb->ptp->b_portname,
+            current_time.tv_sec, current_time.tv_usec,
+            pseg->seq_firstbyte, pseg->seq_lastbyte+1, (unsigned int) etime_rtt); /* DON'T convert from us to ms */
+    } else {
+        Mfprintf (rtt_fileptr, "%s,%s,%s,%s,%ld.%d,%u,%u,%u\n",
+            ptcb->ptp->b_hostname, ptcb->ptp->a_hostname,
+            ptcb->ptp->b_portname, ptcb->ptp->a_portname,
+            current_time.tv_sec, current_time.tv_usec,
+            pseg->seq_firstbyte, pseg->seq_lastbyte+1, (unsigned int) etime_rtt); /* DON'T convert from us to ms */
+    }
 	
     if (debug) {
         fprintf (stdout, "=== Connection info.:: %s : %s : %s : %s\n",
