@@ -1,3 +1,4 @@
+.DS_Store
 *.dat
 Makefile
 avl.o
@@ -67,3 +68,4 @@ tcptrace.man
 tcptrace.opt
 xpl2gpl
 versnum.dSYM
+test_traces
