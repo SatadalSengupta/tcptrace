@@ -170,8 +170,11 @@ int num_modules = 0;
 char *ColorNames[NCOLORS] =
 {"green", "red", "blue", "yellow", "purple", "orange", "magenta", "pink"};
 char *comment;
-// Add RTT file as a global
-MFILE *rtt_fileptr;
+// Sata: Progress reporting
+const u_long PKT_PROGRESS_CUTOFF = 1000000;
+// Sata: Add RTT file as a global
+u_long rtt_count = 0;
+MFILE *rtt_fileptr = NULL;
 
 /* locally global variables */
 static u_long filesize = 0;
@@ -972,6 +975,13 @@ rather than:\n\
 	/* update global and per-file packet counters */
 	++pnum;			/* global */
 	++fpnum;		/* local to this file */
+
+    if (pnum % PKT_PROGRESS_CUTOFF == 0) {
+        time_t rawtime; struct tm * timeinfo;
+        time(&rawtime); timeinfo = localtime(&rawtime);
+        fprintf(stdout, "Packets processed so far: %.2f M, time: %s", (double) pnum/1000000.0, asctime(timeinfo));
+        fflush(stdout);
+    }
 
 
 	/* in case only a subset analysis was requested */

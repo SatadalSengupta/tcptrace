@@ -837,6 +837,14 @@ dump_rtt_sample (tcb * ptcb,
             ptcb->ptp->b_portname, ptcb->ptp->a_portname,
             (unsigned int) etime_rtt); /* DON'T convert from us to ms */
     }
+    rtt_count++;
+    if (rtt_count % PKT_PROGRESS_CUTOFF == 0) {
+        time_t rawtime; struct tm * timeinfo;
+        time(&rawtime); timeinfo = localtime(&rawtime);
+        fprintf(stdout, "\tTotal RTT samples dumped so far: %.2f M, total packets processed so far: %.2f M, time: %s",
+                (double) rtt_count/1000000.0, (double) pnum/1000000.0, asctime(timeinfo));
+        fflush(stdout);
+    }
 	
     if (debug) {
         fprintf (stdout, "=== Connection info.:: %s : %s : %s : %s\n",
