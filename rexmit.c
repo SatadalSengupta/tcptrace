@@ -805,7 +805,7 @@ dump_rtt_sample (tcb * ptcb,
             // Mfprintf (rtt_fileptr, "%s\n",
             //     "Source_IP,Destination_IP,Source_Port,Destination_Port,RTT_Sample_Time,TCP_SEQ_Number,TCP_ACK_Number,RTT_microseconds"); /* Add CSV header */
             Mfprintf (rtt_fileptr, "%s\n",
-                "Source_IP,Destination_IP,Source_Port,Destination_Port,RTT_microseconds"); /* Add CSV header */
+                "ACK_Time,Source_IP,Destination_IP,Source_Port,Destination_Port,ACK_Number,RTT_microseconds"); /* Add CSV header */
         }
 
         if (debug)
@@ -822,9 +822,11 @@ dump_rtt_sample (tcb * ptcb,
         //     ptcb->ptp->a_portname, ptcb->ptp->b_portname,
         //     current_time.tv_sec, current_time.tv_usec,
         //     pseg->seq_firstbyte, pseg->seq_lastbyte+1, (unsigned int) etime_rtt); /* DON'T convert from us to ms */
-        Mfprintf (rtt_fileptr, "%s,%s,%s,%s,%u\n",
+        Mfprintf (rtt_fileptr, "%ld.%06d,%s,%s,%s,%s,%u,%u\n",
+            current_time.tv_sec, current_time.tv_usec,
             ptcb->ptp->a_hostname, ptcb->ptp->b_hostname,
             ptcb->ptp->a_portname, ptcb->ptp->b_portname,
+            pseg->seq_lastbyte+1,
             (unsigned int) etime_rtt); /* DON'T convert from us to ms */
     } else {
         // Mfprintf (rtt_fileptr, "%s,%s,%s,%s,%ld.%d,%u,%u,%u\n",
@@ -832,9 +834,11 @@ dump_rtt_sample (tcb * ptcb,
         //     ptcb->ptp->b_portname, ptcb->ptp->a_portname,
         //     current_time.tv_sec, current_time.tv_usec,
         //     pseg->seq_firstbyte, pseg->seq_lastbyte+1, (unsigned int) etime_rtt); /* DON'T convert from us to ms */
-        Mfprintf (rtt_fileptr, "%s,%s,%s,%s,%u\n",
+        Mfprintf (rtt_fileptr, "%ld.%06d,%s,%s,%s,%s,%u,%u\n",
+            current_time.tv_sec, current_time.tv_usec,
             ptcb->ptp->b_hostname, ptcb->ptp->a_hostname,
             ptcb->ptp->b_portname, ptcb->ptp->a_portname,
+            pseg->seq_lastbyte+1,
             (unsigned int) etime_rtt); /* DON'T convert from us to ms */
     }
     rtt_count++;
